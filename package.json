@@ -1,0 +1,26 @@
+{
+  "name": "webapidev-test",
+  "version": "1.0.0",
+  "description": "COBSCCOMP25.1P-054 W. A. A. I. W. J. N. C. ROWEL",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Rowell2002/WebAPIDev-Test.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/Rowell2002/WebAPIDev-Test/issues"
+  },
+  "homepage": "https://github.com/Rowell2002/WebAPIDev-Test#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
