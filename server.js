@@ -8,6 +8,17 @@ const PORT = process.env.PORT || 3000;
 // Enable express.json() middleware
 app.use(express.json());
 
+// Root route returning status and session
+app.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    session: 'N86007CEM S2'
+  });
+});
+
+// Serve static files from 'public' folder
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Load seed.json into memory at startup
 const seedPath = path.join(__dirname, 'seed.json');
 let data = { provinces: [], districts: [], stations: [], vehicles: [], pings: [] };
@@ -18,14 +29,6 @@ try {
 } catch (err) {
   console.error('Error loading seed.json:', err);
 }
-
-// Root route returning status and session
-app.get('/', (req, res) => {
-  res.json({
-    status: 'ok',
-    session: 'N86007CEM S2'
-  });
-});
 
 // GET /provinces - Retrieve all provinces
 app.get('/provinces', (req, res) => {
