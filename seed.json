@@ -1,0 +1,319 @@
+{
+    "provinces": [
+        {
+            "id": 1,
+            "name": "Western"
+        },
+        {
+            "id": 2,
+            "name": "Central"
+        },
+        {
+            "id": 3,
+            "name": "Southern"
+        },
+        {
+            "id": 4,
+            "name": "Northern"
+        },
+        {
+            "id": 5,
+            "name": "Eastern"
+        },
+        {
+            "id": 6,
+            "name": "North Western"
+        },
+        {
+            "id": 7,
+            "name": "North Central"
+        },
+        {
+            "id": 8,
+            "name": "Uva"
+        },
+        {
+            "id": 9,
+            "name": "Sabaragamuwa"
+        }
+    ],
+    "districts": [
+        {
+            "id": 1,
+            "name": "Colombo",
+            "province_id": 1
+        },
+        {
+            "id": 2,
+            "name": "Gampaha",
+            "province_id": 1
+        },
+        {
+            "id": 3,
+            "name": "Kalutara",
+            "province_id": 1
+        },
+        {
+            "id": 4,
+            "name": "Kandy",
+            "province_id": 2
+        },
+        {
+            "id": 5,
+            "name": "Matale",
+            "province_id": 2
+        },
+        {
+            "id": 6,
+            "name": "Nuwara Eliya",
+            "province_id": 2
+        },
+        {
+            "id": 7,
+            "name": "Galle",
+            "province_id": 3
+        },
+        {
+            "id": 8,
+            "name": "Matara",
+            "province_id": 3
+        },
+        {
+            "id": 9,
+            "name": "Hambantota",
+            "province_id": 3
+        },
+        {
+            "id": 10,
+            "name": "Jaffna",
+            "province_id": 4
+        },
+        {
+            "id": 11,
+            "name": "Kilinochchi",
+            "province_id": 4
+        },
+        {
+            "id": 12,
+            "name": "Mannar",
+            "province_id": 4
+        },
+        {
+            "id": 13,
+            "name": "Vavuniya",
+            "province_id": 4
+        },
+        {
+            "id": 14,
+            "name": "Mullaitivu",
+            "province_id": 4
+        },
+        {
+            "id": 15,
+            "name": "Batticaloa",
+            "province_id": 5
+        },
+        {
+            "id": 16,
+            "name": "Ampara",
+            "province_id": 5
+        },
+        {
+            "id": 17,
+            "name": "Trincomalee",
+            "province_id": 5
+        },
+        {
+            "id": 18,
+            "name": "Kurunegala",
+            "province_id": 6
+        },
+        {
+            "id": 19,
+            "name": "Puttalam",
+            "province_id": 6
+        },
+        {
+            "id": 20,
+            "name": "Anuradhapura",
+            "province_id": 7
+        },
+        {
+            "id": 21,
+            "name": "Polonnaruwa",
+            "province_id": 7
+        },
+        {
+            "id": 22,
+            "name": "Badulla",
+            "province_id": 8
+        },
+        {
+            "id": 23,
+            "name": "Monaragala",
+            "province_id": 8
+        },
+        {
+            "id": 24,
+            "name": "Ratnapura",
+            "province_id": 9
+        },
+        {
+            "id": 25,
+            "name": "Kegalle",
+            "province_id": 9
+        }
+    ],
+    "stations": [
+        {
+            "id": 1,
+            "name": "Colombo Central Police",
+            "district_id": 1
+        },
+        {
+            "id": 2,
+            "name": "Pettah Police",
+            "district_id": 1
+        },
+        {
+            "id": 3,
+            "name": "Negombo Police",
+            "district_id": 2
+        },
+        {
+            "id": 4,
+            "name": "Kalutara Police",
+            "district_id": 3
+        },
+        {
+            "id": 5,
+            "name": "Kandy Police",
+            "district_id": 4
+        },
+        {
+            "id": 6,
+            "name": "Matale Police",
+            "district_id": 5
+        },
+        {
+            "id": 7,
+            "name": "Nuwara Eliya Police",
+            "district_id": 6
+        },
+        {
+            "id": 8,
+            "name": "Galle Police",
+            "district_id": 7
+        },
+        {
+            "id": 9,
+            "name": "Matara Police",
+            "district_id": 8
+        },
+        {
+            "id": 10,
+            "name": "Hambantota Police",
+            "district_id": 9
+        },
+        {
+            "id": 11,
+            "name": "Jaffna Police",
+            "district_id": 10
+        },
+        {
+            "id": 12,
+            "name": "Vavuniya Police",
+            "district_id": 13
+        },
+        {
+            "id": 13,
+            "name": "Batticaloa Police",
+            "district_id": 15
+        },
+        {
+            "id": 14,
+            "name": "Ampara Police",
+            "district_id": 16
+        },
+        {
+            "id": 15,
+            "name": "Trincomalee Police",
+            "district_id": 17
+        },
+        {
+            "id": 16,
+            "name": "Kurunegala Police",
+            "district_id": 18
+        },
+        {
+            "id": 17,
+            "name": "Puttalam Police",
+            "district_id": 19
+        },
+        {
+            "id": 18,
+            "name": "Anuradhapura Police",
+            "district_id": 20
+        },
+        {
+            "id": 19,
+            "name": "Badulla Police",
+            "district_id": 22
+        },
+        {
+            "id": 20,
+            "name": "Ratnapura Police",
+            "district_id": 24
+        }
+    ],
+    "vehicles": [
+        {
+            "id": 1,
+            "registration_number": "WP-TK-0001",
+            "device_id": "DEV0001",
+            "station_id": 1
+        },
+        {
+            "id": 2,
+            "registration_number": "WP-TK-0002",
+            "device_id": "DEV0002",
+            "station_id": 1
+        },
+        {
+            "id": 3,
+            "registration_number": "WP-TK-0003",
+            "device_id": "DEV0003",
+            "station_id": 2
+        }
+    ],
+    "pings": [
+        {
+            "id": 1,
+            "vehicle_id": 1,
+            "latitude": 6.9271,
+            "longitude": 79.8612,
+            "timestamp": "2026-06-21T08:00:00Z"
+        },
+        {
+            "id": 2,
+            "vehicle_id": 1,
+            "latitude": 6.9280,
+            "longitude": 79.8620,
+            "timestamp": "2026-06-22T08:00:00Z"
+        },
+        {
+            "id": 3,
+            "vehicle_id": 1,
+            "latitude": 6.9290,
+            "longitude": 79.8630,
+            "timestamp": "2026-06-23T08:00:00Z"
+        },
+        {
+            "id": 4,
+            "vehicle_id": 2,
+            "latitude": 6.9147,
+            "longitude": 79.8737,
+            "timestamp": "2026-06-21T09:00:00Z"
+        }
+    ]
+}
