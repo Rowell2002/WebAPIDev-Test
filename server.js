@@ -42,6 +42,8 @@ data.vehicles.forEach(v => {
   deviceKeys[`v-${padId}`] = `key_v${padId}`;
 });
 
+const ERROR_VEHICLE_NOT_FOUND = { error: 'Vehicle not found' };
+
 // Helper to find vehicle by id or registration number
 const findVehicle = (idOrReg) => {
   const parsedId = parseInt(idOrReg, 10);
@@ -137,7 +139,7 @@ app.get('/vehicles', (req, res) => {
 app.get('/vehicles/:id', (req, res) => {
   const vehicle = findVehicle(req.params.id);
   if (!vehicle) {
-    return res.status(404).json({ error: 'Vehicle not found' });
+    return res.status(404).json(ERROR_VEHICLE_NOT_FOUND);
   }
 
   const vehiclePings = data.pings.filter(p => p.vehicle_id === vehicle.id);
@@ -168,7 +170,7 @@ app.get('/vehicles/:id', (req, res) => {
 app.get('/vehicles/:id/pings', (req, res) => {
   const vehicle = findVehicle(req.params.id);
   if (!vehicle) {
-    return res.status(404).json({ error: 'Vehicle not found' });
+    return res.status(404).json(ERROR_VEHICLE_NOT_FOUND);
   }
   const vehiclePings = data.pings
     .filter(p => p.vehicle_id === vehicle.id)
@@ -187,7 +189,7 @@ app.get('/vehicles/:id/pings', (req, res) => {
 app.get('/vehicles/:id/last-position', (req, res) => {
   const vehicle = findVehicle(req.params.id);
   if (!vehicle) {
-    return res.status(404).json({ error: 'Vehicle not found' });
+    return res.status(404).json(ERROR_VEHICLE_NOT_FOUND);
   }
 
   const vehiclePings = data.pings.filter(p => p.vehicle_id === vehicle.id);
@@ -218,7 +220,7 @@ app.post('/vehicles/:vehicleId/pings', (req, res) => {
   // 2. 404 if vehicleId not in vehicles array
   const vehicle = findVehicle(req.params.vehicleId);
   if (!vehicle) {
-    return res.status(404).json({ error: 'Vehicle not found' });
+    return res.status(404).json(ERROR_VEHICLE_NOT_FOUND);
   }
 
   // 3. 403 if key does not match deviceKeys[vehicleId]
