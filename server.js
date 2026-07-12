@@ -1,9 +1,14 @@
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
+import express from 'express';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import crypto from 'crypto';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Enable express.json() middleware
 app.use(express.json());
@@ -29,6 +34,23 @@ try {
 } catch (err) {
   console.error('Error loading seed.json:', err);
 }
+
+// Build deviceKeys dynamically from loaded vehicles
+const deviceKeys = {};
+data.vehicles.forEach(v => {
+  const padId = String(v.id).padStart(2, '0');
+  deviceKeys[`v-${padId}`] = `key_v${padId}`;
+});
+
+// Helper to find vehicle by id or registration number
+const findVehicle = (idOrReg) => {
+  const parsedId = parseInt(idOrReg, 10);
+  return data.vehicles.find(v => 
+    (v.id === parsedId) || 
+    (v.register_number === idOrReg) || 
+    (v.registration_number === idOrReg)
+  );
+};
 
 // GET /provinces - Retrieve all provinces
 app.get('/provinces', (req, res) => {
@@ -111,16 +133,6 @@ app.get('/vehicles', (req, res) => {
   res.json(mapped);
 });
 
-// Helper to find vehicle by id or registration number
-const findVehicle = (idOrReg) => {
-  const parsedId = parseInt(idOrReg, 10);
-  return data.vehicles.find(v => 
-    (v.id === parsedId) || 
-    (v.register_number === idOrReg) || 
-    (v.registration_number === idOrReg)
-  );
-};
-
 // GET /vehicles/:id - Retrieve a specific vehicle by id (with last_ping composite)
 app.get('/vehicles/:id', (req, res) => {
   const vehicle = findVehicle(req.params.id);
@@ -128,7 +140,6 @@ app.get('/vehicles/:id', (req, res) => {
     return res.status(404).json({ error: 'Vehicle not found' });
   }
 
-  // Find last_ping: filter pings where vehicle_id matches, sort by timestamp descending, take [0]
   const vehiclePings = data.pings.filter(p => p.vehicle_id === vehicle.id);
   let lastPing = null;
   if (vehiclePings.length > 0) {
@@ -184,7 +195,6 @@ app.get('/vehicles/:id/last-position', (req, res) => {
     return res.status(404).json({ error: 'No pings found for this vehicle' });
   }
 
-  // Sort by timestamp descending
   vehiclePings.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
   const lp = vehiclePings[0];
 
@@ -197,10 +207,77 @@ app.get('/vehicles/:id/last-position', (req, res) => {
   });
 });
 
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-  });
-}
+// POST /vehicles/:vehicleId/pings - Create a new ping record for a vehicle
+app.post('/vehicles/:vehicleId/pings', (req, res) => {
+  // 1. Require X-API-Key header. 401 if header is absent
+  const apiKey = req.headers['x-api-key'];
+  if (!apiKey) {
+    return res.status(401).json({ error: 'Unauthorized: X-API-Key header is missing' });
+  }
 
-module.exports = app;
+  // 2. 404 if vehicleId not in vehicles array
+  const vehicle = findVehicle(req.params.vehicleId);
+  if (!vehicle) {
+    return res.status(404).json({ error: 'Vehicle not found' });
+  }
+
+  // 3. 403 if key does not match deviceKeys[vehicleId]
+  const padId = String(vehicle.id).padStart(2, '0');
+  const deviceKey = `v-${padId}`;
+  const expectedKey = deviceKeys[deviceKey];
+
+  if (apiKey !== expectedKey) {
+    return res.status(403).json({ error: 'Forbidden: Invalid API Key' });
+  }
+
+  // 4. 400 if body missing latitude, longitude, or speed
+  const { latitude, longitude, speed } = req.body;
+  if (
+    latitude === undefined || latitude === null ||
+    longitude === undefined || longitude === null ||
+    speed === undefined || speed === null
+  ) {
+    return res.status(400).json({ error: 'Bad Request: Missing latitude, longitude, or speed' });
+  }
+
+  // 5. Server sets timestamp and creates ping
+  const timestamp = new Date().toISOString();
+  const pingId = data.pings.length > 0 ? Math.max(...data.pings.map(p => p.id)) + 1 : 1;
+
+  const newPing = {
+    id: pingId,
+    vehicle_id: vehicle.id,
+    latitude: parseFloat(latitude),
+    longitude: parseFloat(longitude),
+    speed: parseFloat(speed),
+    timestamp: timestamp
+  };
+
+  // Push ping to array
+  data.pings.push(newPing);
+
+  // Set Location header: /vehicles/:vehicleId/pings/:pingId
+  res.setHeader('Location', `/vehicles/${vehicle.id}/pings/${pingId}`);
+
+  // Set ETag and Last-Modified headers
+  const pingStr = JSON.stringify(newPing);
+  const etag = crypto.createHash('md5').update(pingStr).digest('hex');
+  res.setHeader('ETag', `"${etag}"`);
+  res.setHeader('Last-Modified', new Date(timestamp).toUTCString());
+
+  // Return 201 and the ping matching requested shape
+  res.status(201).json({
+    ping_id: newPing.id,
+    vehicle_id: newPing.vehicle_id,
+    timestamp: newPing.timestamp,
+    lat: newPing.latitude,
+    lng: newPing.longitude,
+    speed: newPing.speed
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running at http://localhost:${PORT}`);
+});
+
+export default app;
