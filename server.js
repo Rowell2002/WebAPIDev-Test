@@ -13,8 +13,38 @@ const __dirname = path.dirname(__filename);
 // Enable express.json() middleware
 app.use(express.json());
 
+// Express basicAuth middleware
+const basicAuth = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Police API"');
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const parts = authHeader.split(' ');
+  if (parts.length !== 2 || parts[0].toLowerCase() !== 'basic') {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Police API"');
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  let credentials;
+  try {
+    credentials = Buffer.from(parts[1], 'base64').toString('utf-8');
+  } catch (err) {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Police API"');
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+
+  const [username, password] = credentials.split(':');
+  if (username !== 'police' || password !== 'nibm2024') {
+    return res.status(403).json({ error: 'Forbidden' });
+  }
+
+  next();
+};
+
 // Root route returning status and session
-app.get('/', (req, res) => {
+app.get('/', basicAuth, (req, res) => {
   res.json({
     status: 'ok',
     session: 'N86007CEM S2'
@@ -53,7 +83,7 @@ const findVehicle = (idOrReg) => {
 };
 
 // GET /provinces - Retrieve all provinces
-app.get('/provinces', (req, res) => {
+app.get('/provinces', basicAuth, (req, res) => {
   const mapped = data.provinces.map(p => ({
     province_id: p.id,
     name: p.name
@@ -62,7 +92,7 @@ app.get('/provinces', (req, res) => {
 });
 
 // GET /provinces/:id - Retrieve a specific province by id
-app.get('/provinces/:id', (req, res) => {
+app.get('/provinces/:id', basicAuth, (req, res) => {
   const id = parseInt(req.params.id, 10);
   const province = data.provinces.find(p => p.id === id);
   if (!province) {
@@ -75,7 +105,7 @@ app.get('/provinces/:id', (req, res) => {
 });
 
 // GET /districts - Retrieve all districts
-app.get('/districts', (req, res) => {
+app.get('/districts', basicAuth, (req, res) => {
   const mapped = data.districts.map(d => ({
     district_id: d.id,
     name: d.name,
@@ -85,7 +115,7 @@ app.get('/districts', (req, res) => {
 });
 
 // GET /districts/:id - Retrieve a specific district by id
-app.get('/districts/:id', (req, res) => {
+app.get('/districts/:id', basicAuth, (req, res) => {
   const id = parseInt(req.params.id, 10);
   const district = data.districts.find(d => d.id === id);
   if (!district) {
@@ -99,7 +129,7 @@ app.get('/districts/:id', (req, res) => {
 });
 
 // GET /stations - Retrieve all stations
-app.get('/stations', (req, res) => {
+app.get('/stations', basicAuth, (req, res) => {
   const mapped = data.stations.map(s => ({
     station_id: s.id,
     name: s.name,
@@ -109,7 +139,7 @@ app.get('/stations', (req, res) => {
 });
 
 // GET /stations/:id - Retrieve a specific station by id
-app.get('/stations/:id', (req, res) => {
+app.get('/stations/:id', basicAuth, (req, res) => {
   const id = parseInt(req.params.id, 10);
   const station = data.stations.find(s => s.id === id);
   if (!station) {
@@ -123,7 +153,7 @@ app.get('/stations/:id', (req, res) => {
 });
 
 // GET /vehicles - Retrieve all vehicles
-app.get('/vehicles', (req, res) => {
+app.get('/vehicles', basicAuth, (req, res) => {
   const mapped = data.vehicles.map(v => ({
     vehicle_id: v.id,
     reg_number: v.register_number || v.registration_number,
@@ -134,7 +164,7 @@ app.get('/vehicles', (req, res) => {
 });
 
 // GET /vehicles/:id - Retrieve a specific vehicle by id (with last_ping composite)
-app.get('/vehicles/:id', (req, res) => {
+app.get('/vehicles/:id', basicAuth, (req, res) => {
   const vehicle = findVehicle(req.params.id);
   if (!vehicle) {
     return res.status(404).json({ error: 'Vehicle not found' });
@@ -165,7 +195,7 @@ app.get('/vehicles/:id', (req, res) => {
 });
 
 // GET /vehicles/:id/pings - Retrieve pings for a specific vehicle by id
-app.get('/vehicles/:id/pings', (req, res) => {
+app.get('/vehicles/:id/pings', basicAuth, (req, res) => {
   const vehicle = findVehicle(req.params.id);
   if (!vehicle) {
     return res.status(404).json({ error: 'Vehicle not found' });
@@ -184,7 +214,7 @@ app.get('/vehicles/:id/pings', (req, res) => {
 });
 
 // GET /vehicles/:id/last-position - Retrieve most recent position only (no vehicle metadata)
-app.get('/vehicles/:id/last-position', (req, res) => {
+app.get('/vehicles/:id/last-position', basicAuth, (req, res) => {
   const vehicle = findVehicle(req.params.id);
   if (!vehicle) {
     return res.status(404).json({ error: 'Vehicle not found' });
