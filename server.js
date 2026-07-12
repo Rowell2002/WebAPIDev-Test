@@ -111,16 +111,25 @@ app.get('/vehicles', (req, res) => {
   res.json(mapped);
 });
 
+// Helper to find vehicle by id or registration number
+const findVehicle = (idOrReg) => {
+  const parsedId = parseInt(idOrReg, 10);
+  return data.vehicles.find(v => 
+    (v.id === parsedId) || 
+    (v.register_number === idOrReg) || 
+    (v.registration_number === idOrReg)
+  );
+};
+
 // GET /vehicles/:id - Retrieve a specific vehicle by id (with last_ping composite)
 app.get('/vehicles/:id', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const vehicle = data.vehicles.find(v => v.id === id);
+  const vehicle = findVehicle(req.params.id);
   if (!vehicle) {
     return res.status(404).json({ error: 'Vehicle not found' });
   }
 
   // Find last_ping: filter pings where vehicle_id matches, sort by timestamp descending, take [0]
-  const vehiclePings = data.pings.filter(p => p.vehicle_id === id);
+  const vehiclePings = data.pings.filter(p => p.vehicle_id === vehicle.id);
   let lastPing = null;
   if (vehiclePings.length > 0) {
     vehiclePings.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -146,13 +155,12 @@ app.get('/vehicles/:id', (req, res) => {
 
 // GET /vehicles/:id/pings - Retrieve pings for a specific vehicle by id
 app.get('/vehicles/:id/pings', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const vehicle = data.vehicles.find(v => v.id === id);
+  const vehicle = findVehicle(req.params.id);
   if (!vehicle) {
     return res.status(404).json({ error: 'Vehicle not found' });
   }
   const vehiclePings = data.pings
-    .filter(p => p.vehicle_id === id)
+    .filter(p => p.vehicle_id === vehicle.id)
     .map(p => ({
       ping_id: p.id,
       vehicle_id: p.vehicle_id,
@@ -166,13 +174,12 @@ app.get('/vehicles/:id/pings', (req, res) => {
 
 // GET /vehicles/:id/last-position - Retrieve most recent position only (no vehicle metadata)
 app.get('/vehicles/:id/last-position', (req, res) => {
-  const id = parseInt(req.params.id, 10);
-  const vehicle = data.vehicles.find(v => v.id === id);
+  const vehicle = findVehicle(req.params.id);
   if (!vehicle) {
     return res.status(404).json({ error: 'Vehicle not found' });
   }
 
-  const vehiclePings = data.pings.filter(p => p.vehicle_id === id);
+  const vehiclePings = data.pings.filter(p => p.vehicle_id === vehicle.id);
   if (vehiclePings.length === 0) {
     return res.status(404).json({ error: 'No pings found for this vehicle' });
   }
