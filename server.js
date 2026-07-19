@@ -215,6 +215,71 @@ app.get('/vehicles', basicAuth, async (req, res) => {
   }
 });
 
+// POST /vehicles - Register a new vehicle
+app.post('/vehicles', basicAuth, async (req, res) => {
+  try {
+    const { register_number, device_id, station_id } = req.body;
+    if (!register_number || !device_id || station_id === undefined || station_id === null) {
+      return res.status(400).json({ error: 'Bad Request: Missing register_number, device_id, or station_id' });
+    }
+
+    // Validate referenced station_id exists in the database
+    const stationIdNum = parseInt(station_id, 10);
+    const station = await db.collection('stations').findOne({ id: stationIdNum });
+    if (!station) {
+      return res.status(400).json({ error: 'Bad Request: Referenced station_id does not exist' });
+    }
+
+    // Check if vehicle with same register_number or device_id already exists
+    const existingVehicle = await db.collection('vehicles').findOne({
+      $or: [
+        { register_number },
+        { registration_number: register_number },
+        { device_id }
+      ]
+    });
+    if (existingVehicle) {
+      return res.status(409).json({ error: 'Conflict: Vehicle or device already registered' });
+    }
+
+    // Find next unique vehicle ID dynamically
+    const maxVehicleDoc = await db.collection('vehicles')
+      .find()
+      .sort({ id: -1 })
+      .limit(1)
+      .next();
+    const vehicleId = maxVehicleDoc ? maxVehicleDoc.id + 1 : 1;
+
+    const newVehicle = {
+      id: vehicleId,
+      register_number,
+      device_id,
+      station_id: stationIdNum
+    };
+
+    // Insert new vehicle
+    await db.collection('vehicles').insertOne(newVehicle);
+
+    // Register corresponding device key in memory immediately
+    const padId = String(vehicleId).padStart(2, '0');
+    deviceKeys[`v-${padId}`] = `key_v${padId}`;
+
+    // Set Location header
+    res.setHeader('Location', `/vehicles/${vehicleId}`);
+
+    // Return created vehicle
+    res.status(201).json({
+      vehicle_id: newVehicle.id,
+      reg_number: newVehicle.register_number,
+      device_id: newVehicle.device_id,
+      station_id: newVehicle.station_id
+    });
+  } catch (err) {
+    console.error('Error registering new vehicle:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // GET /vehicles/:id - Retrieve a specific vehicle by id (with last_ping composite)
 app.get('/vehicles/:id', basicAuth, async (req, res) => {
   try {

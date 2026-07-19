@@ -77,6 +77,13 @@ All requests must use JSON format. Member lookups accept either a numeric `id` o
 ### Vehicles
 * **`GET /vehicles`**: Returns a list of all vehicles.
   * Response: `[{ vehicle_id, reg_number, device_id, station_id }]`
+* **`POST /vehicles`**: Registers a new vehicle in the system.
+  * Authentication: Basic Auth (Administrative)
+  * Body parameters: `register_number`, `device_id`, `station_id`
+  * Response: `201 Created`
+  * Response Headers:
+    * `Location`: `/vehicles/:id`
+  * Response Body: `{ vehicle_id, reg_number, device_id, station_id }`
 * **`GET /vehicles/:id`**: Returns a specific vehicle along with its most recent position (`last_ping`).
   * Response: `{ vehicle_id, reg_number, device_id, station_id, last_ping: { ping_id, vehicle_id, timestamp, lat, lng, speed } }`
   * Error: `404` if not found.
