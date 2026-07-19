@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import crypto from 'crypto';
 import { MongoClient } from 'mongodb';
+import jwt from 'jsonwebtoken';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -11,41 +12,62 @@ const PORT = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Express basicAuth middleware
-const basicAuth = (req, res, next) => {
+// Validate environment variables early
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret) {
+  console.error('Error: JWT_SECRET environment variable is not defined!');
+  process.exit(1);
+}
+
+const uri = process.env.MONGODB_URI;
+if (!uri) {
+  console.error('Error: MONGODB_URI environment variable is not defined!');
+  process.exit(1);
+}
+
+// JWT Authentication Middleware
+const jwtAuth = (req, res, next) => {
   const authHeader = req.headers['authorization'];
   if (!authHeader) {
-    res.setHeader('WWW-Authenticate', 'Basic realm="Police API"');
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Unauthorized: Missing Authorization header' });
   }
 
   const parts = authHeader.split(' ');
-  if (parts.length !== 2 || parts[0].toLowerCase() !== 'basic') {
-    res.setHeader('WWW-Authenticate', 'Basic realm="Police API"');
-    return res.status(401).json({ error: 'Unauthorized' });
+  if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') {
+    return res.status(401).json({ error: 'Unauthorized: Invalid Authorization header format' });
   }
 
-  let credentials;
+  const token = parts[1];
   try {
-    credentials = Buffer.from(parts[1], 'base64').toString('utf-8');
+    const decoded = jwt.verify(token, jwtSecret);
+    req.user = decoded;
+    next();
   } catch (err) {
-    res.setHeader('WWW-Authenticate', 'Basic realm="Police API"');
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: 'Unauthorized: Invalid or expired token' });
   }
-
-  const [username, password] = credentials.split(':');
-  if (username !== 'police' || password !== 'nibm2024') {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
-
-  next();
 };
 
 // Enable express.json() middleware
 app.use(express.json());
 
-// Root route returning status and session
-app.get('/', basicAuth, (req, res) => {
+// POST /login - Authenticate credentials and return signed JWT token
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Bad Request: Missing username or password' });
+  }
+
+  if (username !== 'police' || password !== 'nibm2024') {
+    return res.status(401).json({ error: 'Unauthorized: Invalid username or password' });
+  }
+
+  // Generate token valid for 1 hour
+  const token = jwt.sign({ username }, jwtSecret, { expiresIn: '1h' });
+  res.json({ token });
+});
+
+// Root route returning status and session (runs first for GET / requests)
+app.get('/', jwtAuth, (req, res) => {
   res.json({
     status: 'ok',
     session: 'N86007CEM S2'
@@ -56,11 +78,6 @@ app.get('/', basicAuth, (req, res) => {
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Connect to MongoDB Atlas
-const uri = process.env.MONGODB_URI;
-if (!uri) {
-  console.error('Error: MONGODB_URI environment variable is not defined!');
-  process.exit(1);
-}
 const client = new MongoClient(uri);
 let db;
 
@@ -101,9 +118,8 @@ const findVehicle = async (idOrReg) => {
   return await db.collection('vehicles').findOne(query);
 };
 
-
 // GET /provinces - Retrieve all provinces
-app.get('/provinces', basicAuth, async (req, res) => {
+app.get('/provinces', jwtAuth, async (req, res) => {
   try {
     const provinces = await db.collection('provinces').find().toArray();
     const mapped = provinces.map(p => ({
@@ -117,7 +133,7 @@ app.get('/provinces', basicAuth, async (req, res) => {
 });
 
 // GET /provinces/:id - Retrieve a specific province by id
-app.get('/provinces/:id', basicAuth, async (req, res) => {
+app.get('/provinces/:id', jwtAuth, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const province = await db.collection('provinces').findOne({ id });
@@ -134,7 +150,7 @@ app.get('/provinces/:id', basicAuth, async (req, res) => {
 });
 
 // GET /districts - Retrieve all districts
-app.get('/districts', basicAuth, async (req, res) => {
+app.get('/districts', jwtAuth, async (req, res) => {
   try {
     const districts = await db.collection('districts').find().toArray();
     const mapped = districts.map(d => ({
@@ -149,7 +165,7 @@ app.get('/districts', basicAuth, async (req, res) => {
 });
 
 // GET /districts/:id - Retrieve a specific district by id
-app.get('/districts/:id', basicAuth, async (req, res) => {
+app.get('/districts/:id', jwtAuth, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const district = await db.collection('districts').findOne({ id });
@@ -167,7 +183,7 @@ app.get('/districts/:id', basicAuth, async (req, res) => {
 });
 
 // GET /stations - Retrieve all stations
-app.get('/stations', basicAuth, async (req, res) => {
+app.get('/stations', jwtAuth, async (req, res) => {
   try {
     const stations = await db.collection('stations').find().toArray();
     const mapped = stations.map(s => ({
@@ -182,7 +198,7 @@ app.get('/stations', basicAuth, async (req, res) => {
 });
 
 // GET /stations/:id - Retrieve a specific station by id
-app.get('/stations/:id', basicAuth, async (req, res) => {
+app.get('/stations/:id', jwtAuth, async (req, res) => {
   try {
     const id = parseInt(req.params.id, 10);
     const station = await db.collection('stations').findOne({ id });
@@ -200,7 +216,7 @@ app.get('/stations/:id', basicAuth, async (req, res) => {
 });
 
 // GET /vehicles - Retrieve all vehicles
-app.get('/vehicles', basicAuth, async (req, res) => {
+app.get('/vehicles', jwtAuth, async (req, res) => {
   try {
     const vehicles = await db.collection('vehicles').find().toArray();
     const mapped = vehicles.map(v => ({
@@ -216,7 +232,7 @@ app.get('/vehicles', basicAuth, async (req, res) => {
 });
 
 // POST /vehicles - Register a new vehicle
-app.post('/vehicles', basicAuth, async (req, res) => {
+app.post('/vehicles', jwtAuth, async (req, res) => {
   try {
     const register_number = req.body.register_number || req.body.reg_number;
     const { device_id, station_id } = req.body;
@@ -291,7 +307,7 @@ app.post('/vehicles', basicAuth, async (req, res) => {
 });
 
 // PUT /vehicles/:id - Update an existing vehicle
-app.put('/vehicles/:id', basicAuth, async (req, res) => {
+app.put('/vehicles/:id', jwtAuth, async (req, res) => {
   try {
     const vehicle = await findVehicle(req.params.id);
     if (!vehicle) {
@@ -361,7 +377,7 @@ app.put('/vehicles/:id', basicAuth, async (req, res) => {
 });
 
 // GET /vehicles/:id - Retrieve a specific vehicle by id (with last_ping composite)
-app.get('/vehicles/:id', basicAuth, async (req, res) => {
+app.get('/vehicles/:id', jwtAuth, async (req, res) => {
   try {
     const vehicle = await findVehicle(req.params.id);
     if (!vehicle) {
@@ -399,7 +415,7 @@ app.get('/vehicles/:id', basicAuth, async (req, res) => {
 });
 
 // GET /vehicles/:id/pings - Retrieve pings for a specific vehicle by id
-app.get('/vehicles/:id/pings', basicAuth, async (req, res) => {
+app.get('/vehicles/:id/pings', jwtAuth, async (req, res) => {
   try {
     const vehicle = await findVehicle(req.params.id);
     if (!vehicle) {
@@ -424,7 +440,7 @@ app.get('/vehicles/:id/pings', basicAuth, async (req, res) => {
 });
 
 // GET /vehicles/:id/last-position - Retrieve most recent position only (no vehicle metadata)
-app.get('/vehicles/:id/last-position', basicAuth, async (req, res) => {
+app.get('/vehicles/:id/last-position', jwtAuth, async (req, res) => {
   try {
     const vehicle = await findVehicle(req.params.id);
     if (!vehicle) {
@@ -453,7 +469,7 @@ app.get('/vehicles/:id/last-position', basicAuth, async (req, res) => {
   }
 });
 
-// POST /vehicles/:vehicleId/pings - Create a new ping record for a vehicle
+// POST /vehicles/:vehicleId/pings - Create a new ping record for a vehicle (secured by X-API-Key)
 app.post('/vehicles/:vehicleId/pings', async (req, res) => {
   try {
     const apiKey = req.headers['x-api-key'];

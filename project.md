@@ -33,13 +33,14 @@ node seed-db.js
 
 ## 2. Authentication & Security
 
-### GET Endpoints
-All GET endpoints are secured with **Basic Access Authentication**:
-* **Realm**: `Police API`
-* **Username**: `police`
-* **Password**: `nibm2024`
+### JSON Web Token (JWT) Authentication
+All GET and PUT endpoints are secured with **JWT Authentication**:
+- **Authorization Header**: `Authorization: Bearer <your_jwt_token>`
+- **Invalid/Missing Token**: Returns `401 Unauthorized`.
 
-Provide these in the `Authorization` header (`Authorization: Basic cG9saWNlOm5pYm0yMDI0`).
+To obtain a token, call the **`POST /login`** endpoint using the following credentials:
+- **Username**: `police`
+- **Password**: `nibm2024`
 
 ### POST Endpoint
 The POST ping creation route is secured using **API Keys**:
@@ -52,6 +53,12 @@ The POST ping creation route is secured using **API Keys**:
 ## 3. API Reference
 
 All requests must use JSON format. Member lookups accept either a numeric `id` or a registration string (e.g., `HB-6168`).
+
+### Authentication
+* **`POST /login`**: Exchange administrative credentials for a JWT.
+  * Body parameters: `username`, `password`
+  * Response: `{ token }`
+  * Error: `401` if credentials are invalid. `400` if parameters are missing.
 
 ### Provinces
 * **`GET /provinces`**: Returns a list of all provinces.
