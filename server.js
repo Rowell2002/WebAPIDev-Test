@@ -44,7 +44,7 @@ const basicAuth = (req, res, next) => {
 };
 
 // Root route returning status and session
-app.get('/', basicAuth, (req, res) => {
+app.get('/', (req, res) => {
   res.json({
     status: 'ok',
     session: 'N86007CEM S2'
