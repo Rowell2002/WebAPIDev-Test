@@ -44,6 +44,14 @@ const basicAuth = (req, res, next) => {
 // Enable express.json() middleware
 app.use(express.json());
 
+// Root route returning status and session
+app.get('/', basicAuth, (req, res) => {
+  res.json({
+    status: 'ok',
+    session: 'N86007CEM S2'
+  });
+});
+
 // Serve static files from 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -93,13 +101,6 @@ const findVehicle = async (idOrReg) => {
   return await db.collection('vehicles').findOne(query);
 };
 
-// Root route returning status and session
-app.get('/', basicAuth, (req, res) => {
-  res.json({
-    status: 'ok',
-    session: 'N86007CEM S2'
-  });
-});
 
 // GET /provinces - Retrieve all provinces
 app.get('/provinces', basicAuth, async (req, res) => {
