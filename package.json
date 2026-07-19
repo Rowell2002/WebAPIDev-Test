@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/Rowell2002/WebAPIDev-Test#readme",
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "mongodb": "^7.5.0"
   }
 }

@@ -49,3 +49,6 @@ Thumbs.db
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
+
+# Local seeding scripts containing credentials
+seed-db.js
