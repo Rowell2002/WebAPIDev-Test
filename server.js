@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -47,7 +48,11 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Connect to MongoDB Atlas
-const uri = process.env.MONGODB_URI || "mongodb+srv://chethanarowell2002_db_user:HamLuFe901UXcDdz@webapicluster.ho8bfgh.mongodb.net/WebAPI?appName=WebAPICluster";
+const uri = process.env.MONGODB_URI;
+if (!uri) {
+  console.error('Error: MONGODB_URI environment variable is not defined!');
+  process.exit(1);
+}
 const client = new MongoClient(uri);
 let db;
 
