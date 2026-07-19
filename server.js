@@ -290,6 +290,76 @@ app.post('/vehicles', basicAuth, async (req, res) => {
   }
 });
 
+// PUT /vehicles/:id - Update an existing vehicle
+app.put('/vehicles/:id', basicAuth, async (req, res) => {
+  try {
+    const vehicle = await findVehicle(req.params.id);
+    if (!vehicle) {
+      return res.status(404).json({ error: 'Vehicle not found' });
+    }
+
+    const register_number = req.body.register_number || req.body.reg_number;
+    const { device_id, station_id } = req.body;
+
+    const updateFields = {};
+
+    // Validate referenced station_id if provided
+    if (station_id !== undefined && station_id !== null) {
+      const stationIdNum = parseInt(station_id, 10);
+      const station = await db.collection('stations').findOne({ id: stationIdNum });
+      if (!station) {
+        return res.status(400).json({ error: 'Bad Request: Referenced station_id does not exist' });
+      }
+      updateFields.station_id = stationIdNum;
+    }
+
+    // Check register_number duplicates if changing
+    if (register_number) {
+      const existingWithReg = await db.collection('vehicles').findOne({
+        id: { $ne: vehicle.id },
+        $or: [
+          { register_number },
+          { registration_number: register_number }
+        ]
+      });
+      if (existingWithReg) {
+        return res.status(409).json({ error: 'Conflict: Vehicle registration number is already registered to another vehicle' });
+      }
+      updateFields.register_number = register_number;
+    }
+
+    // Check device_id duplicates if changing
+    if (device_id) {
+      const existingWithDevice = await db.collection('vehicles').findOne({
+        id: { $ne: vehicle.id },
+        device_id
+      });
+      if (existingWithDevice) {
+        return res.status(409).json({ error: 'Conflict: Device ID is already registered to another vehicle' });
+      }
+      updateFields.device_id = device_id;
+    }
+
+    // Update in database if there are changes
+    if (Object.keys(updateFields).length > 0) {
+      await db.collection('vehicles').updateOne({ id: vehicle.id }, { $set: updateFields });
+    }
+
+    // Retrieve the updated vehicle to return the latest state
+    const updatedVehicle = await db.collection('vehicles').findOne({ id: vehicle.id });
+
+    res.json({
+      vehicle_id: updatedVehicle.id,
+      reg_number: updatedVehicle.register_number || updatedVehicle.registration_number,
+      device_id: updatedVehicle.device_id,
+      station_id: updatedVehicle.station_id
+    });
+  } catch (err) {
+    console.error('Error updating vehicle:', err);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 // GET /vehicles/:id - Retrieve a specific vehicle by id (with last_ping composite)
 app.get('/vehicles/:id', basicAuth, async (req, res) => {
   try {

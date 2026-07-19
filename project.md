@@ -87,6 +87,12 @@ All requests must use JSON format. Member lookups accept either a numeric `id` o
 * **`GET /vehicles/:id`**: Returns a specific vehicle along with its most recent position (`last_ping`).
   * Response: `{ vehicle_id, reg_number, device_id, station_id, last_ping: { ping_id, vehicle_id, timestamp, lat, lng, speed } }`
   * Error: `404` if not found.
+* **`PUT /vehicles/:id`**: Updates an existing vehicle's fields.
+  * Authentication: Basic Auth (Administrative)
+  * Body parameters (optional): `register_number` (or `reg_number`), `device_id`, `station_id`
+  * Response: `200 OK`
+  * Response Body: `{ vehicle_id, reg_number, device_id, station_id }`
+  * Error: `404` if vehicle is not found. `400` if station_id is invalid. `409` if duplicate registration number/device ID.
 * **`GET /vehicles/:id/pings`**: Returns all pings recorded for a specific vehicle.
   * Response: `[{ ping_id, vehicle_id, timestamp, lat, lng, speed }]`
   * Error: `404` if vehicle is not found. Returns `[]` if vehicle has no pings.
