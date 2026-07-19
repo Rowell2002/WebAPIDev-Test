@@ -218,9 +218,10 @@ app.get('/vehicles', basicAuth, async (req, res) => {
 // POST /vehicles - Register a new vehicle
 app.post('/vehicles', basicAuth, async (req, res) => {
   try {
-    const { register_number, device_id, station_id } = req.body;
+    const register_number = req.body.register_number || req.body.reg_number;
+    const { device_id, station_id } = req.body;
     if (!register_number || !device_id || station_id === undefined || station_id === null) {
-      return res.status(400).json({ error: 'Bad Request: Missing register_number, device_id, or station_id' });
+      return res.status(400).json({ error: 'Bad Request: Missing register_number (or reg_number), device_id, or station_id' });
     }
 
     // Validate referenced station_id exists in the database
@@ -242,13 +243,22 @@ app.post('/vehicles', basicAuth, async (req, res) => {
       return res.status(409).json({ error: 'Conflict: Vehicle or device already registered' });
     }
 
-    // Find next unique vehicle ID dynamically
-    const maxVehicleDoc = await db.collection('vehicles')
-      .find()
-      .sort({ id: -1 })
-      .limit(1)
-      .next();
-    const vehicleId = maxVehicleDoc ? maxVehicleDoc.id + 1 : 1;
+    // Determine vehicle ID: use client-supplied ID if provided, otherwise generate next ID dynamically
+    let vehicleId = parseInt(req.body.vehicle_id || req.body.id, 10);
+    if (!isNaN(vehicleId)) {
+      // If client supplied an ID, make sure it is not already taken
+      const idConflict = await db.collection('vehicles').findOne({ id: vehicleId });
+      if (idConflict) {
+        return res.status(409).json({ error: `Conflict: Vehicle ID ${vehicleId} is already in use` });
+      }
+    } else {
+      const maxVehicleDoc = await db.collection('vehicles')
+        .find()
+        .sort({ id: -1 })
+        .limit(1)
+        .next();
+      vehicleId = maxVehicleDoc ? maxVehicleDoc.id + 1 : 1;
+    }
 
     const newVehicle = {
       id: vehicleId,
